@@ -1,3 +1,3 @@
-# Simple Tests
+# Code Snippets
 
-Collection of simple and standalone tests related to different projects.
+Code snippets for different tasks and projects.
