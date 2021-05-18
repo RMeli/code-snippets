@@ -1,4 +1,10 @@
 *.pdf
 
+# jupyter
+.ipynb_checkpoints
+
 # macOS
 .DS_Store
+
+# editors
+.vscode
