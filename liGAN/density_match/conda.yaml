@@ -1,0 +1,19 @@
+name: densitymatch
+channels:
+  - conda-forge
+  - pytorch
+  - open3d-admin
+dependencies:
+  - python
+  - ipython
+  - pip
+
+  - numpy
+  - scipy
+
+  - open3d
+
+  - pytorch
+
+  - pip:
+    - molgrid
