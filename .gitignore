@@ -1,3 +1,8 @@
+# data
+liGAN/density_match/*.pcd
+liGAN/density_match/grids/
+
+
 # images
 *.pdf
 
