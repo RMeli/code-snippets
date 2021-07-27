@@ -2,6 +2,9 @@
 liGAN/density_match/*.pcd
 liGAN/density_match/grids/
 
+# trajectories
+*.tpr
+*.xtc
 
 # images
 *.pdf
