@@ -6,12 +6,14 @@ from sklearn.preprocessing import OrdinalEncoder
 
 from spyrmsd import rmsd
 
+import tqdm
+
 #from MDAnalysis.tests.datafiles import PSF, DCD
 from matplotlib import pyplot as plt
 
 verbose = True
 symmetry = True # Symmetry in RMSD calculation
-step = 2 # Trajectory downsampling
+step = 10 # Trajectory downsampling
 
 top_file = "5JWT.tpr"
 traj_file = "5JWT.xtc"
@@ -61,48 +63,45 @@ except mda.exceptions.NoDataError:
     print(f"No bond information available for '{select}'")
     exit(-1)
 
-# FIXME: Hard-coded atomic numbers for benzene
-# FIXME: Need a consistent way to get them from selection!
-atomicnums = np.array([6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1])
-print(selection.types)
 # Types mapped to unique integers
 # Uses as atomicnums in spyrmsd
 # Just need to label the nodes consistently
-atomicmap = OrdinalEncoder().fit_transform(selection.types.reshape(-1, 1))[0]
-print(atomicmap)
+atomicmap = OrdinalEncoder().fit_transform(selection.types.reshape(-1, 1))[:,0]
+if verbose:
+    print(f"Atomic mapping: '{select}'\n{atomicmap}")
 
 time = []
 rmsds = []
 rmsd_nosymm = []
-for ts in traj.trajectory[::step]:
+for ts in tqdm.tqdm(traj.trajectory[::step]):
     # Align protein backbones
     old_rmsd, new_rmsd = align.alignto(traj, ref, select="backbone", strict=True)
     assert new_rmsd <= old_rmsd
 
     if symmetry:
         r = rmsd.symmrmsd(
-            selection.atoms.positions, ref_positions, atomicnums, atomicnums, A, A
+            selection.atoms.positions, ref_positions, atomicmap, atomicmap, A, A
         )
     else:
-        r = rmsd.rmsd(selection.atoms.positions, ref_positions, atomicnums, atomicnums)
+        r = rmsd.rmsd(selection.atoms.positions, ref_positions, atomicmap, atomicmap)
 
     time.append(ts.time)
     rmsds.append(r)
 
     rmsd_nosymm.append(
-        rmsd.rmsd(selection.atoms.positions, ref_positions, atomicnums, atomicnums)
+        rmsd.rmsd(selection.atoms.positions, ref_positions, atomicmap, atomicmap)
     )
 
 # Check rmsd_nosymm is the same as rms.RMDS
 rmsd_mda = rms.RMSD(
-    traj, ref, select="backbone", groupselections=["resname LIG"], ref_frame=0
+    traj, ref, select="backbone", groupselections=["resname LIG"], ref_frame=iframe
 )
-R = rmsd_mda.run()
-assert np.allclose(rmsd_nosymm, R.results.rmsd[::step, -1])
+R = rmsd_mda.run(verbose=True, step=step)
+assert np.allclose(rmsd_nosymm, R.results.rmsd[:,-1])
 
 plt.plot(time, rmsds, label="symmrmsd")
 plt.plot(time, rmsd_nosymm, label="rmsd")
-plt.plot(time, R.results.rmsd[::step, -1], label="mda")
+plt.plot(time, R.results.rmsd[:,-1], label="mda")
 plt.xlabel("Time")
 plt.ylabel("RMSD")
 plt.legend()
