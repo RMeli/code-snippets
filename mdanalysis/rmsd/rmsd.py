@@ -2,21 +2,22 @@ import MDAnalysis as mda
 from MDAnalysis.analysis import align, rms
 
 import numpy as np
+from sklearn.preprocessing import OrdinalEncoder
 
 from spyrmsd import rmsd
 
-from MDAnalysis.tests.datafiles import PSF, DCD
+#from MDAnalysis.tests.datafiles import PSF, DCD
 from matplotlib import pyplot as plt
 
 verbose = True
-symmetry = True
-step = 2
+symmetry = True # Symmetry in RMSD calculation
+step = 2 # Trajectory downsampling
 
 top_file = "5JWT.tpr"
 traj_file = "5JWT.xtc"
 
-iframe = 0
-select = "resname LIG"
+iframe = 0 # Reference frame
+select = "resname LIG" # Reference selection
 
 traj = mda.Universe(top_file, traj_file)
 ref = mda.Universe(top_file, traj_file)
@@ -63,6 +64,12 @@ except mda.exceptions.NoDataError:
 # FIXME: Hard-coded atomic numbers for benzene
 # FIXME: Need a consistent way to get them from selection!
 atomicnums = np.array([6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1])
+print(selection.types)
+# Types mapped to unique integers
+# Uses as atomicnums in spyrmsd
+# Just need to label the nodes consistently
+atomicmap = OrdinalEncoder().fit_transform(selection.types.reshape(-1, 1))[0]
+print(atomicmap)
 
 time = []
 rmsds = []
